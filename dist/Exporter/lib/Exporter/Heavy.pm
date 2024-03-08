@@ -194,7 +194,14 @@ sub heavy_export {
     warn "Importing into $callpkg from $pkg: ",
 		join(", ",sort @imports) if $Exporter::Verbose;
 
+    use warnings::register;
     foreach $sym (@imports) {
+	warnings::warnif 'redefine', "Subroutine ${callpkg}::$1 redefined"
+	  if $sym =~ /^&?(\w.*)/
+	     && *{"${callpkg}::$1"}{CODE}
+	     && *{"${callpkg}::$1"}{CODE} ne *{"${pkg}::$1"}{CODE};
+
+	no warnings 'redefine';
 	# shortcut for the common case of no type character
 	(*{"${callpkg}::$sym"} = \&{"${pkg}::$sym"}, next)
 	    unless $sym =~ s/^(\W)//;
